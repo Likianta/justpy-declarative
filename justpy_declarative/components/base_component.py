@@ -1,3 +1,5 @@
+from lk_logger import lk
+
 from ..context_manager import context, parent, this
 from ..context_manager.uid_system import UID, gen_id, id_ref
 
@@ -13,38 +15,17 @@ class BaseComponent:
     # parent: None
     # children: list['BaseComponent']
     
-    @staticmethod
-    def _get_level(frame) -> int:
-        """
-        DELETE: no usage
-        
-        Notes:
-            请确保 BaseComponent 在实例化的时候, 与 with 语句处于同一行! 否则将
-            导致层级计算错误.
-            举例来说, 如下所示:
-                # 正确
-                with BaseComponent() as com:
-                    ...
-                # 错误 (不要使用 \\ 换行!) (注: 这里我是想用单反斜杠表示的, 但是
-                # 会导致 python 在解析本模块时报错, 所以用双反斜杠暂代)
-                with \\
-                    BaseComponent() as com:
-                    ...
-                
-        Returns:
-            int 0|4|8|12|...
-                数字越大, 嵌套越深; 数字越小, 越接近根层级. 0 代表顶级节点 (通常
-                是 WebPage 对象).
-        """
-        from ..context_manager.inspect import inspect
-        inspect.chfile(frame.f_code.co_filename)
-        srcln = inspect.get_line(frame.f_lineno)
-        spacing = len(srcln) - len(srcln.lstrip())
-        return int(spacing / 4)
+    _exit_lock: int
+    
+    #   0: 表示可退出
+    #   >0: 表示当前不可退出 (此时会让 _exit_lock 计数减 1)
+    #   see `justpy_declarative.hacking.ExitLockCount:docstring:作用机制`
     
     def __enter__(self):
         # self.parent = None
         # self.children = []
+        from ..hacking import com_exit_lock
+        self._exit_lock = com_exit_lock.fetch_lock()
         
         # for now, `this` keyword represents 'the last' component (usually it
         # means 'parent' component), so we get the last component's real body
@@ -52,9 +33,8 @@ class BaseComponent:
         last_com = this.represents  # type: [BaseComponent, None]
         
         self.level = last_com.level + 4 if last_com is not None else 0
-        # from lk_utils.lk_logger import lk
-        # lk.loga(last_com, self.level)
         self.uid = gen_id(self.level)
+        lk.loga('enter', self.uid, h='parent')
         
         context.update(self.uid, self.level, self, last_com)
         #   after `context.update`, `this` and `parent` now work as expected.
@@ -64,6 +44,12 @@ class BaseComponent:
     
     def __exit__(self, exc_type, exc_val, exc_tb):
         """ 将 this, parent 分别指向 parent 和 grand_parent. """
+        if self._exit_lock > 0:
+            self._exit_lock -= 1
+            return
+        
+        lk.loga('exit', self.uid, h='parent')
+        
         if parent.represents is not None:
             this.represents.add_to(parent.represents)
         

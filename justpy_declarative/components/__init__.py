@@ -15,10 +15,18 @@ class Build:
     """
     
     def __init__(self, build_func, *args, **kwargs):
-        self._build = lambda : build_func(*args, **kwargs)
-        
+        self._build = lambda: build_func(*args, **kwargs)
+        self.view = None
+    
     def __enter__(self):
-        return self._build()
+        from ..hacking import com_exit_lock
+        com_exit_lock.put_a_lock(1)
+        #   see `justpy_declarative.hacking.ExitLockCount:docstring:作用机制`
+        
+        self.view = self._build()
+        assert self.view is not None
+        
+        return self.view
     
     def __exit__(self, exc_type, exc_val, exc_tb):
-        pass
+        self.view.__exit__(exc_type, exc_val, exc_tb)
