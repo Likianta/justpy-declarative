@@ -24,7 +24,9 @@ class Build:
         #   see `justpy_declarative.hacking.ExitLockCount:docstring:作用机制`
         
         self.view = self._build()
-        assert self.view is not None
+        assert self.view is not None, (
+            'You must call `return component` in the end of your `build_func`!',
+        )
         
         return self.view
     

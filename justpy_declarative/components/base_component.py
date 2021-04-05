@@ -21,6 +21,13 @@ class BaseComponent:
     #   >0: 表示当前不可退出 (此时会让 _exit_lock 计数减 1)
     #   see `justpy_declarative.hacking.ExitLockCount:docstring:作用机制`
     
+    def __getattr__(self, item):
+        if isinstance(item, str):
+            if item.startswith('on_'):
+                return lambda func: self.on(item[3:], func)
+        # noinspection PyUnresolvedReferences
+        return super().__getattr__(item)
+    
     def __enter__(self):
         # self.parent = None
         # self.children = []
