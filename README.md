@@ -11,15 +11,12 @@ from justpy_declarative import Application, WebPage, Div
 from lk_lambdex import lambdex  # pip install lk-lambdex
 
 with Application() as app:
-
     with WebPage() as page:
-
         with Div() as div:
             div.text = 'Hello World'
             div.on('click', lambdex(('self', 'msg'), '''
                 self.text = 'Text was clicked!'
             '''))
-
     app.start(page, open_browser=True)
     #   This will automatically open `http://localhost:8000` in browser.
 

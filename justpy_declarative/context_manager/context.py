@@ -11,15 +11,18 @@ class Context:
     )
     ''' {
             uid: {
-                'uid': TComponentID,
-                'level': 0,
-                'com': com,
+                'uid': `uid_system.UID|None`,
+                'level': `int 0|4|8|12|...`,
+                'com': `comonents/base_component.py:BaseComponent`,
                 'children': {
-                    uid: {...},
-                    ...
+                    uid: {
+                        'uid': ...,
+                        'level': ...,
+                        'com': ...,
+                        'children': { ... }
+                    }, ...
                 }
-            },
-            ...
+            }, ...
         }
     '''
     

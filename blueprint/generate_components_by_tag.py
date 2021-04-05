@@ -14,7 +14,7 @@ def _fmt_string(s: str):
 
 
 # the `file_template` relates to `justpy_declarative/components/html_components
-# .py`, you can consider it as so.
+# .py`, you can consider it as that file.
 file_template = _fmt_string('''
     """
     Notes:
