@@ -103,7 +103,42 @@ class Build:
 class ComponentExitLock:
     """
     作用机制:
-        TODO
+        `BaseComponent` 在调用 `__enter__` 时, 会获取一个 "退出锁":
+            BaseComponent.__enter__(self):
+                global _com_exit_lock
+                self._exit_lock = _com_exit_lock.fetch_lock()
+                ...
+        该锁是一个大于等于 0 的整数. 通常来说, 它的值只有两种情况: 0 或者 1.
+        当退出锁的值是 0 时, `BaseComponent` 调用 `__exit__` 时可以正常退出; 当
+        值为 1 时, 第一次调用 `__exit__` 时会被阻止正常退出, 此时退出锁 -= 1 (值
+        变成 0); 第二次调用 `__exit__` 时才可以正常退出.
+        
+        为什么要阻止一次正常退出呢? 目的就是 "延缓" 正常退出机制的发生.
+        如下示例:
+            def some_view():
+                with Text() as txt:
+                    return txt  # [A]
+            
+            with WebPage() as page:
+                with Build(some_view) as view:
+                    pass
+                    with Div() as div:
+                        pass  # [B]
+            
+            当运行到 `[A]` 时, `txt` 会退出. 但我们希望的是, 在指向到 `[B]` 位置
+            之后, `txt` 才退出.
+            为了阻止 `txt` 在 `[A]` 位置就退出, 那么就试图让 `txt` 在 `[A]` 位置
+            退出时阻止它的正常退出机制. 因此, `Build.__enter__` 就是做了这件事:
+            1. 在 `txt.__enter__` 之前, 告诉 `ComponentExitLock` 要给 `txt` 加一
+                个值为 1 的退出锁
+            2. 在 `txt.__enter__` 时, `txt` 获取了这个退出锁
+            3. 在 `txt` 执行到 `[A]`, `txt` 第一次调用 `__exit__`, 由于 `txt` 的
+                退出锁的存在, 导致 `txt` 没有完成正常退出操作. 此时 `this` 指针
+                仍然指向 `txt` (也就是说 with 的上下文环境仍然处于 `txt` 范围)
+            4. 然后, `div` 正常执行 `__enter__` 和 `__exit__`
+            5. `div` 在 `[B]` 位置执行完 `__exit__` 后, `Build(some_view)` 也开
+                始触发 `Build.__exit__`, 在这里, `Build` 会主动再调用一次 `txt
+                .__exit__`, 这次, `txt.__exit__` 就可以完成正常的退出操作了
     """
     
     _count = 0
