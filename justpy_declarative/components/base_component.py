@@ -90,9 +90,6 @@ class Build:
         if self._view is None:
             self._view = this.represents
         assert self._view is not None
-        # assert self.view is not None, (
-        #     'You must call `return component` in the end of your `build_func`!'
-        # )
         
         return self._view
     
@@ -125,7 +122,7 @@ class ComponentExitLock:
                     with Div() as div:
                         pass  # [B]
             
-            当运行到 `[A]` 时, `txt` 会退出. 但我们希望的是, 在指向到 `[B]` 位置
+            当运行到 `[A]` 时, `txt` 会退出. 但我们希望的是, 在执行到 `[B]` 位置
             之后, `txt` 才退出.
             为了阻止 `txt` 在 `[A]` 位置就退出, 那么就试图让 `txt` 在 `[A]` 位置
             退出时阻止它的正常退出机制. 因此, `Build.__enter__` 就是做了这件事:
@@ -134,11 +131,13 @@ class ComponentExitLock:
             2. 在 `txt.__enter__` 时, `txt` 获取了这个退出锁
             3. 在 `txt` 执行到 `[A]`, `txt` 第一次调用 `__exit__`, 由于 `txt` 的
                 退出锁的存在, 导致 `txt` 没有完成正常退出操作. 此时 `this` 指针
-                仍然指向 `txt` (也就是说 with 的上下文环境仍然处于 `txt` 范围)
-            4. 然后, `div` 正常执行 `__enter__` 和 `__exit__`
+                仍然留在 `txt` (也就是说 with 的上下文环境仍然处于 `txt` 范围)
+            4. 然后, `div` 在 `txt` 的上下文环境下, 正确执行它的 `__enter__` 操
+                作
             5. `div` 在 `[B]` 位置执行完 `__exit__` 后, `Build(some_view)` 也开
-                始触发 `Build.__exit__`, 在这里, `Build` 会主动再调用一次 `txt
-                .__exit__`, 这次, `txt.__exit__` 就可以完成正常的退出操作了
+                始触发 `Build.__exit__`, 在 `Build.__exit__` 中, `Build` 会主动
+                再调用一次 `txt.__exit__`. 这次, `txt.__exit__` 就可以完成正常的
+                退出操作了
     """
     
     _count = 0
