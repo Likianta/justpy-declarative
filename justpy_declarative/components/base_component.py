@@ -39,9 +39,9 @@ class BaseComponent:
         # by `this.represents`
         last_com = this.represents  # type: [BaseComponent, None]
         
-        self.level = last_com.level + 4 if last_com is not None else 0
+        self.level = last_com.level + 1 if last_com is not None else 0
         self.uid = gen_id(self.level)
-        lk.loga('enter', self.uid, h='parent')
+        lk.loga('enter', self.uid, self.level, h='parent')
         
         context.update(self.uid, self.level, self, last_com)
         #   after `context.update`, `this` and `parent` now work as expected.
