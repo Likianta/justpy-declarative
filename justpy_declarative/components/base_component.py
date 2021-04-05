@@ -19,7 +19,7 @@ class BaseComponent:
     
     #   0: 表示可退出
     #   >0: 表示当前不可退出 (此时会让 _exit_lock 计数减 1)
-    #   see `justpy_declarative.hacking.ExitLockCount:docstring:作用机制`
+    #   see `ExitLockCount:docstring:作用机制`
     
     def __getattr__(self, item):
         if isinstance(item, str):
@@ -31,8 +31,8 @@ class BaseComponent:
     def __enter__(self):
         # self.parent = None
         # self.children = []
-        from ..hacking import com_exit_lock
-        self._exit_lock = com_exit_lock.fetch_lock()
+        global _com_exit_lock
+        self._exit_lock = _com_exit_lock.fetch_lock()
         
         # for now, `this` keyword represents 'the last' component (usually it
         # means 'parent' component), so we get the last component's real body
@@ -62,3 +62,62 @@ class BaseComponent:
         
         this.point_to(id_ref[(pid := self.uid.parent_id)])
         parent.point_to(id_ref[pid.parent_id] if pid else None)
+
+
+class Build:
+    """
+    Examples:
+        with WebPage() as page:
+            with Build(add_main_text) as main_txt:
+                main_txt.on('click', ...)
+        
+        def add_main_text():
+            with Div() as div:
+                with Text() as text:
+                    return text
+    """
+    
+    def __init__(self, build_func, *args, **kwargs):
+        self._build_func = lambda: build_func(*args, **kwargs)
+        self._view = None
+    
+    def __enter__(self):
+        global _com_exit_lock
+        _com_exit_lock.put_a_lock(1)
+        #   see `ExitLockCount:docstring:作用机制`
+        
+        self._view = self._build_func()
+        if self._view is None:
+            self._view = this.represents
+        assert self._view is not None
+        # assert self.view is not None, (
+        #     'You must call `return component` in the end of your `build_func`!'
+        # )
+        
+        return self._view
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._view.__exit__(exc_type, exc_val, exc_tb)
+
+
+class ComponentExitLock:
+    """
+    作用机制:
+        TODO
+    """
+    
+    _count = 0
+    
+    def fetch_lock(self):
+        out = self._count
+        self.reset_lock()
+        return out
+    
+    def reset_lock(self):
+        self._count = 0
+    
+    def put_a_lock(self, count: int):
+        self._count = count
+
+
+_com_exit_lock = ComponentExitLock()

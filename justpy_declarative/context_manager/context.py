@@ -12,7 +12,7 @@ class Context:
     ''' {
             uid: {
                 'uid': `uid_system.UID|None`,
-                'level': `int 0|4|8|12|...`,
+                'level': `int 0|1|2|3|...`,
                 'com': `comonents/base_component.py:BaseComponent`,
                 'children': {
                     uid: {
