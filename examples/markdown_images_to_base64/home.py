@@ -23,8 +23,6 @@ def build_app_win():
             win.style = 'width: 550px; height: 420px'
             
             build_main_content()
-            
-            # return win
 
 
 def build_main_content():
@@ -33,37 +31,6 @@ def build_main_content():
         
         # row 1
         build_address_bar()
-        
-        lk.loga(div.uid, div.level)
-        lk.loga(this.represents.uid, this.represents.level)
-        
-        with A() as a:
-            raise Exception
-        
-        # TEST
-        with Div() as test:
-            raise Exception
-            lk.loga(test.uid)
-            test.style = (
-                'background: #2f3640;'
-                'position: absolute;'
-                'top: 50%; left: 50%;'
-                'height: 40px'
-            )
-            
-            with Input() as inp:
-                inp.style = (
-                    'border-radius: 12px;'
-                    'padding-left: 16px; padding-right: 48px;'
-                    'width: 487px; height: 30px; float: left;'
-                )
-            
-            with Button() as btn:
-                btn.style = (
-                    'height: 30px; float: right'
-                )
-                
-                btn.text = 'BROWSE'
         
         # row 2
         # TODO
@@ -74,6 +41,10 @@ def build_address_bar():
         addr_bar.classes = (
             'mx-auto'
         )
+        addr_bar.style = (
+            'margin-top: 20px;'
+            'width: 487px; height: 30px;'
+        )
         
         with Input() as inp:
             inp.classes = (
@@ -82,10 +53,11 @@ def build_address_bar():
                 'focus:border-blue-500'
             )  # note: justpy's tailwind css doesn't support `rounded-xl`
             inp.style = (
-                'border-radius: 12px;'
-                'margin-top: 20px;'
-                'padding-left: 16px; padding-right: 48px;'  # FIXME
-                'width: 487px; height: 30px;'
+                'border-radius: 12px; border-top-right-radius: 0px; '
+                'border-bottom-right-radius: 0px; '
+                'float: left;'
+                'padding-left: 16px; padding-right: 16px; '
+                'width: 420px; height: 30px; '
             )
             
             inp.is_valid_path = False
@@ -99,7 +71,7 @@ def build_address_bar():
                     self.value, self.is_valid_path
                 )
             '''))
-            
+        
         with Button() as btn:
             btn.classes = (
                 'font-bold text-white'
@@ -110,11 +82,13 @@ def build_address_bar():
                 'border-bottom-right-radius: 12px;'
                 'border-top-left-radius: 0;'
                 'border-top-right-radius: 12px;'
+                'float: right; '
+                'font-size: 13px;'
+                'width: 67px; height: 30px;'
             )
             btn.text = 'BROWSE'
-        
-        # return addr_bar
 
 
 if __name__ == '__main__':
     main()
+    lk.over()
