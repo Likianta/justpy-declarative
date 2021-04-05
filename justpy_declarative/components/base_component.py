@@ -21,6 +21,9 @@ class BaseComponent:
     #   >0: 表示当前不可退出 (此时会让 _exit_lock 计数减 1)
     #   see `ExitLockCount:docstring:作用机制`
     
+    def build(self):
+        pass
+    
     def __getattr__(self, item):
         if isinstance(item, str):
             if item.startswith('on_'):
@@ -46,6 +49,8 @@ class BaseComponent:
         context.update(self.uid, self.level, self, last_com)
         #   after `context.update`, `this` and `parent` now work as expected.
         #   i.e. now `this` represents `self`, and `parent` represents `last_com`
+        
+        self.build()
         
         return self
     
